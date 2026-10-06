@@ -98,7 +98,7 @@ export function SongOfTheDay() {
       }
 
       router.push(
-        `/watch?id=${encodeURIComponent(video.videoId)}&title=${encodeURIComponent(decodeHtmlEntities(video.title))}&q=${encodeURIComponent(query)}`,
+        `/watch?id=${encodeURIComponent(video.videoId)}&title=${encodeURIComponent(decodeHtmlEntities(video.title))}&channel=${encodeURIComponent(decodeHtmlEntities(video.channelTitle))}&q=${encodeURIComponent(query)}`,
       );
     } catch {
       setError("Couldn’t connect to karaoke search. Check your connection and try again.");

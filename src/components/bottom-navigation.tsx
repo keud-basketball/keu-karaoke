@@ -2,16 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/components/auth/auth-provider";
 
 const destinations = [
   { href: "/", label: "HOME / SEARCH", icon: "🏠" },
   { href: "/history", label: "HISTORY", icon: "🕘" },
   { href: "/favorites", label: "MY KARAOKE", icon: "❤️" },
   { href: "/queue", label: "QUEUE", icon: "🎤" },
+  { href: "/socials", label: "SOCIALS", icon: "🌐" },
 ];
 
 export function BottomNavigation() {
   const pathname = usePathname();
+  const { authStatus } = useAuth();
+  const accountDestination = authStatus === "signed-in"
+    ? { href: "/profile", label: "PROFILE", icon: "🎙️" }
+    : { href: "/login", label: "LOGIN", icon: "🔐" };
   const activePath = pathname === "/watch" || pathname === "/search" ? "/" : pathname;
 
   return (
@@ -31,14 +37,14 @@ export function BottomNavigation() {
             </Link>
           );
         })}
-        <button
-          className="bottom-navigation-link"
-          onClick={() => window.alert("Login coming soon.")}
-          type="button"
+        <Link
+          aria-current={activePath === accountDestination.href ? "page" : undefined}
+          className={`bottom-navigation-link${activePath === accountDestination.href ? " is-active" : ""}`}
+          href={accountDestination.href}
         >
-          <span aria-hidden="true">🔐</span>
-          <span>LOGIN</span>
-        </button>
+          <span aria-hidden="true">{accountDestination.icon}</span>
+          <span>{accountDestination.label}</span>
+        </Link>
       </div>
     </nav>
   );

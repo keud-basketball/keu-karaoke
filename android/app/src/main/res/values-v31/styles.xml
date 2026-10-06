@@ -1,0 +1,12 @@
+<resources>
+    <style name="Theme.Keuraoke" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@drawable/keuraoke_launch_background</item>
+        <item name="android:statusBarColor">#0A0E20</item>
+        <item name="android:navigationBarColor">#0A0E20</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:colorAccent">#35B7FF</item>
+        <item name="android:windowSplashScreenBackground">#0A0E20</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/keuraoke_logo</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">#0A0E20</item>
+    </style>
+</resources>

@@ -331,7 +331,7 @@ export function SearchResults({ query }: SearchResultsProps) {
                 <div className="video-actions">
                   <Link
                     className="button button-play"
-                    href={`/watch?id=${encodeURIComponent(video.videoId)}&title=${encodeURIComponent(title)}&q=${encodeURIComponent(query)}`}
+                    href={`/watch?id=${encodeURIComponent(video.videoId)}&title=${encodeURIComponent(title)}&channel=${encodeURIComponent(channelTitle)}&q=${encodeURIComponent(query)}`}
                     aria-label={`Play karaoke video: ${title}`}
                   >
                     <span aria-hidden="true">▶</span> PLAY KARAOKE

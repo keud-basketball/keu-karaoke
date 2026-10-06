@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { useKaraokeQueue } from "@/lib/karaoke-queue";
 import { decodeHtmlEntities } from "@/lib/decode-html-entities";
 
-function watchHref(videoId: string, title: string) {
-  return `/watch?id=${encodeURIComponent(videoId)}&title=${encodeURIComponent(title)}`;
+function watchHref(videoId: string, title: string, channelTitle: string) {
+  return `/watch?id=${encodeURIComponent(videoId)}&title=${encodeURIComponent(title)}&channel=${encodeURIComponent(channelTitle)}`;
 }
 
 export function QueueSection({ showEmpty = false }: { showEmpty?: boolean }) {
@@ -21,7 +21,11 @@ export function QueueSection({ showEmpty = false }: { showEmpty?: boolean }) {
     const [currentSong, nextSong] = queue;
     if (!nextSong) return;
     remove(currentSong.videoId);
-    router.push(watchHref(nextSong.videoId, decodeHtmlEntities(nextSong.title)));
+    router.push(watchHref(
+      nextSong.videoId,
+      decodeHtmlEntities(nextSong.title),
+      decodeHtmlEntities(nextSong.channelTitle),
+    ));
   }
 
   return (
@@ -67,7 +71,7 @@ export function QueueSection({ showEmpty = false }: { showEmpty?: boolean }) {
                 <div className="queue-item-actions">
                   <Link
                     className="queue-action queue-play"
-                    href={watchHref(video.videoId, title)}
+                    href={watchHref(video.videoId, title, channelTitle)}
                   >
                     PLAY KARAOKE
                   </Link>

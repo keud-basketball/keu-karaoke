@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { KaraokePlayer } from "@/components/karaoke-player";
 import { QueueSection } from "@/components/queue-section";
+import { PerformanceRecorder } from "@/components/performance-recorder";
+import { WatchSongActions } from "@/components/watch-song-actions";
 import { decodeHtmlEntities } from "@/lib/decode-html-entities";
 
 type WatchPageProps = {
   searchParams: Promise<{
     id?: string | string[];
     title?: string | string[];
+    channel?: string | string[];
     q?: string | string[];
   }>;
 };
@@ -19,6 +22,7 @@ export default async function WatchPage({ searchParams }: WatchPageProps) {
   const params = await searchParams;
   const videoId = oneParam(params.id);
   const title = decodeHtmlEntities(oneParam(params.title)) || "Karaoke video";
+  const channelTitle = decodeHtmlEntities(oneParam(params.channel)) || "Karaoke video";
   const query = oneParam(params.q);
   const backHref = query ? `/?q=${encodeURIComponent(query)}` : "/";
   const isValidVideoId = /^[A-Za-z0-9_-]{11}$/.test(videoId);
@@ -35,7 +39,15 @@ export default async function WatchPage({ searchParams }: WatchPageProps) {
           <p className="eyebrow">NOW SINGING</p>
           <h1>{title}</h1>
           {isValidVideoId ? (
-            <KaraokePlayer videoId={videoId} />
+            <>
+              <KaraokePlayer videoId={videoId} />
+              <WatchSongActions
+                channelTitle={channelTitle}
+                title={title}
+                videoId={videoId}
+              />
+              <PerformanceRecorder songTitle={title} />
+            </>
           ) : (
             <div className="state-card state-error" role="alert">
               <p>This karaoke video link is invalid. Choose a result to start singing.</p>

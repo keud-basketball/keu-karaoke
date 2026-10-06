@@ -17,6 +17,12 @@
 /.next/
 /out/
 
+# Android
+/.gradle/
+/app/build/
+/android/app/build/
+/local.properties
+
 # production
 /build
 

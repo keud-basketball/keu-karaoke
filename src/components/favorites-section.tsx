@@ -41,7 +41,7 @@ export function FavoritesSection() {
                 <div className="video-actions">
                   <Link
                     className="button button-play"
-                    href={`/watch?id=${encodeURIComponent(video.videoId)}&title=${encodeURIComponent(title)}`}
+                    href={`/watch?id=${encodeURIComponent(video.videoId)}&title=${encodeURIComponent(title)}&channel=${encodeURIComponent(channelTitle)}`}
                     aria-label={`Play karaoke video: ${title}`}
                   >
                     <span aria-hidden="true">▶</span> PLAY KARAOKE

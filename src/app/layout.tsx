@@ -56,6 +56,7 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+
   },
 };
 
@@ -66,6 +67,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+          <meta
+              name="google-site-verification"
+                  content="4UAiVlhj7q_4z9OdLzktocfdYenv3GBQ4nudMsP7O6M"
+                    />
+                    </head>
       <body>
         <AuthProvider>
           {children}

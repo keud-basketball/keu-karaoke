@@ -65,6 +65,44 @@ function mapVideos(items: unknown[]): KaraokeVideo[] {
     });
 }
 
+function embeddableVideoIds(items: unknown[]) {
+  return new Set(
+    items.flatMap((item) => {
+      if (!isRecord(item)) return [];
+      const videoId = stringField(item, "id");
+      const status = item.status;
+      const privacyStatus = stringField(status, "privacyStatus");
+
+      return videoId &&
+        isRecord(status) &&
+        status.embeddable === true &&
+        (privacyStatus === "public" || privacyStatus === "unlisted")
+        ? [videoId]
+        : [];
+    }),
+  );
+}
+
+function youtubeErrorResponse(data: unknown) {
+  const error = isRecord(data) && isRecord(data.error) ? data.error : undefined;
+  const errors = error && Array.isArray(error.errors) ? error.errors : [];
+  const isQuotaError = errors.some((item) =>
+    /quota|dailylimit/i.test(stringField(item, "reason") ?? ""),
+  );
+
+  return jsonResponse(
+    {
+      error: {
+        code: isQuotaError ? "quota_exceeded" : "youtube_api_error",
+        message: isQuotaError
+          ? "YouTube search is temporarily unavailable. Please try again later."
+          : "Karaoke search is temporarily unavailable. Please try again.",
+      },
+    },
+    isQuotaError ? 503 : 502,
+  );
+}
+
 export async function GET(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const query = searchParams.get("q")?.trim() ?? "";
@@ -137,22 +175,7 @@ export async function GET(request: Request) {
   }
 
   if (!response.ok) {
-    const error = isRecord(data) && isRecord(data.error) ? data.error : undefined;
-    const errors = error && Array.isArray(error.errors) ? error.errors : [];
-    const isQuotaError = errors.some((item) =>
-      /quota|dailylimit/i.test(stringField(item, "reason") ?? ""),
-    );
-    return jsonResponse(
-      {
-        error: {
-          code: isQuotaError ? "quota_exceeded" : "youtube_api_error",
-          message: isQuotaError
-            ? "YouTube search is temporarily unavailable. Please try again later."
-            : "Karaoke search is temporarily unavailable. Please try again.",
-        },
-      },
-      isQuotaError ? 503 : 502,
-    );
+    return youtubeErrorResponse(data);
   }
 
   if (!isRecord(data) || !Array.isArray(data.items)) {
@@ -163,8 +186,57 @@ export async function GET(request: Request) {
   }
 
   const nextPageToken = stringField(data, "nextPageToken");
+  const videos = mapVideos(data.items);
+  if (videos.length === 0) {
+    return jsonResponse({
+      videos,
+      ...(nextPageToken ? { nextPageToken } : {}),
+    });
+  }
+
+  const statusUrl = new URL("https://www.googleapis.com/youtube/v3/videos");
+  statusUrl.search = new URLSearchParams({
+    part: "status",
+    id: videos.map((video) => video.videoId).join(","),
+    key: apiKey,
+  }).toString();
+
+  let statusResponse: Response;
+  try {
+    statusResponse = await fetch(statusUrl, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch {
+    return jsonResponse(
+      { error: { code: "upstream_unavailable", message: "Karaoke search is temporarily unavailable. Please try again." } },
+      502,
+    );
+  }
+
+  let statusData: unknown;
+  try {
+    statusData = await statusResponse.json();
+  } catch {
+    return jsonResponse(
+      { error: { code: "invalid_response", message: "Karaoke search returned an unexpected response. Please try again." } },
+      502,
+    );
+  }
+
+  if (!statusResponse.ok) {
+    return youtubeErrorResponse(statusData);
+  }
+  if (!isRecord(statusData) || !Array.isArray(statusData.items)) {
+    return jsonResponse(
+      { error: { code: "invalid_response", message: "Karaoke search returned an unexpected response. Please try again." } },
+      502,
+    );
+  }
+
+  const playableIds = embeddableVideoIds(statusData.items);
   return jsonResponse({
-    videos: mapVideos(data.items),
+    videos: videos.filter((video) => playableIds.has(video.videoId)),
     ...(nextPageToken ? { nextPageToken } : {}),
   });
 }

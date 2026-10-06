@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { KaraokePlayer } from "@/components/karaoke-player";
+import { KaraokePlayback } from "@/components/karaoke-playback";
 import { QueueSection } from "@/components/queue-section";
-import { PerformanceRecorder } from "@/components/performance-recorder";
-import { WatchSongActions } from "@/components/watch-song-actions";
 import { decodeHtmlEntities } from "@/lib/decode-html-entities";
 
 type WatchPageProps = {
@@ -36,20 +34,20 @@ export default async function WatchPage({ searchParams }: WatchPageProps) {
         </header>
 
         <section className="player-section">
-          <p className="eyebrow">NOW SINGING</p>
-          <h1>{title}</h1>
           {isValidVideoId ? (
-            <>
-              <KaraokePlayer videoId={videoId} />
-              <WatchSongActions
-                channelTitle={channelTitle}
-                title={title}
-                videoId={videoId}
-              />
-              <PerformanceRecorder songTitle={title} />
-            </>
+            <KaraokePlayback
+              query={query}
+              video={{
+                videoId,
+                title,
+                channelTitle,
+                thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+              }}
+            />
           ) : (
             <div className="state-card state-error" role="alert">
+              <p className="eyebrow">NOW SINGING</p>
+              <h1>{title}</h1>
               <p>This karaoke video link is invalid. Choose a result to start singing.</p>
             </div>
           )}

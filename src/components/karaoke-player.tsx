@@ -5,15 +5,26 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 type KaraokePlayerProps = {
   videoId: string;
+  onError?: (videoId: string) => void;
+  unavailable?: boolean;
 };
 
-export function KaraokePlayer({ videoId }: KaraokePlayerProps) {
+export function KaraokePlayer({
+  videoId,
+  onError,
+  unavailable = false,
+}: KaraokePlayerProps) {
   const playerTarget = useRef<HTMLDivElement>(null);
   const playerInstance = useRef<{ destroy: () => void } | null>(null);
+  const onErrorRef = useRef(onError);
   const [apiLoaded, setApiLoaded] = useState(
     () => typeof window !== "undefined" && Boolean(window.YT?.Player),
   );
   const [unavailableFor, setUnavailableFor] = useState<string | null>(null);
+
+  useLayoutEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
 
   useLayoutEffect(() => {
     const previousReadyCallback = window.onYouTubeIframeAPIReady;
@@ -45,7 +56,13 @@ export function KaraokePlayer({ videoId }: KaraokePlayerProps) {
         origin: window.location.origin,
       },
       events: {
-        onError: () => setUnavailableFor(videoId),
+        onError: () => {
+          if (onErrorRef.current) {
+            onErrorRef.current(videoId);
+          } else {
+            setUnavailableFor(videoId);
+          }
+        },
       },
     });
 
@@ -67,7 +84,7 @@ export function KaraokePlayer({ videoId }: KaraokePlayerProps) {
       />
       <div className="player-frame">
         <div className="player-target" ref={playerTarget} />
-        {unavailableFor === videoId && (
+        {(unavailableFor === videoId || unavailable) && (
           <div className="player-unavailable" role="alert">
             <span className="state-icon" aria-hidden="true">!</span>
             <p>This video cannot be played inside KEU. Please choose another karaoke result.</p>

@@ -138,7 +138,7 @@ export function PostRecordDialog({
                 CANCEL
               </button>
               <button className="button button-play" disabled={posting} type="submit">
-                {posting ? "POSTING…" : "POST"}
+                {posting ? "POSTING…" : "POST TO SOCIALS"}
               </button>
             </div>
           </form>

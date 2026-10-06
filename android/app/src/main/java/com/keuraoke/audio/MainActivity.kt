@@ -48,8 +48,10 @@ class MainActivity : Activity() {
     private lateinit var presetSpinner: Spinner
     private lateinit var inputSpinner: Spinner
     private lateinit var outputSpinner: Spinner
-    private lateinit var offsetLabel: TextView
-    private lateinit var offsetSeekBar: SeekBar
+    private lateinit var echoAmountLabel: TextView
+    private lateinit var echoAmountSeekBar: SeekBar
+    private lateinit var echoDelayLabel: TextView
+    private lateinit var echoDelaySeekBar: SeekBar
     private lateinit var homeStatus: TextView
     private lateinit var homePage: ScrollView
     private lateinit var studioPage: ScrollView
@@ -330,6 +332,22 @@ class MainActivity : Activity() {
         )
         content.addView(presetSpinner)
         echoSwitch = switch("ECHO EFFECT")
+        echoAmountLabel = label("ECHO AMOUNT 30%", 14f)
+        content.addView(echoAmountLabel)
+        echoAmountSeekBar = SeekBar(this).apply {
+            max = 100
+            progress = 30
+            contentDescription = "Echo amount from zero to one hundred percent"
+        }
+        content.addView(echoAmountSeekBar)
+        echoDelayLabel = label("DELAY 120 ms", 14f)
+        content.addView(echoDelayLabel)
+        echoDelaySeekBar = SeekBar(this).apply {
+            max = 700
+            progress = 120
+            contentDescription = "Echo return delay from zero to seven hundred milliseconds"
+        }
+        content.addView(echoDelaySeekBar)
         reverbSwitch = switch("REVERB EFFECT")
         vocalChainSwitch = switch("VOCAL TONE / COMPRESSION")
         bypassSwitch = switch("FX BYPASS")
@@ -402,6 +420,24 @@ class MainActivity : Activity() {
         bypassSwitch.setOnCheckedChangeListener { _, checked ->
             if (!updatingControls) engine.setFxBypassed(checked)
         }
+        echoAmountSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                echoAmountLabel.text = "ECHO AMOUNT $progress%"
+                engine.setEchoAmountPercent(progress)
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+        })
+        echoDelaySeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                echoDelayLabel.text = "DELAY $progress ms"
+                engine.setEchoDelayMs(progress)
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+        })
     }
 
     private fun buildSettingsPage() {
@@ -414,20 +450,6 @@ class MainActivity : Activity() {
         content.addView(lowLatencySwitch)
         content.addView(label(
             "Android may ignore the low-latency output request or use a larger device buffer. AudioRecord does not expose the same low-latency performance-mode option.",
-            13f,
-        ))
-
-        content.addView(sectionHeading("LATENCY OFFSET"))
-        offsetLabel = label("0 ms — no additional delay", 14f)
-        content.addView(offsetLabel)
-        offsetSeekBar = SeekBar(this).apply {
-            max = 200
-            progress = 0
-            contentDescription = "Additional latency offset from zero to 200 milliseconds"
-        }
-        content.addView(offsetSeekBar)
-        content.addView(label(
-            "Default: 0 ms. Raising this setting deliberately adds delay; it cannot make the hardware path faster.",
             13f,
         ))
 
@@ -450,20 +472,6 @@ class MainActivity : Activity() {
             engine.setLowLatencyMode(checked)
             if (engineRequested) scheduleDeviceRefresh()
         }
-        offsetSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                engine.setLatencyOffsetMs(progress)
-                offsetLabel.text = if (progress == 0) {
-                    "0 ms — no additional delay"
-                } else {
-                    "+$progress ms — intentional monitoring delay"
-                }
-                renderDiagnostics()
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
-        })
     }
 
     private fun buildKaraokePage() {
@@ -587,11 +595,12 @@ class MainActivity : Activity() {
         latestDiagnostics = null
         engine.setPreset(currentPreset)
         engine.setEchoEnabled(echoSwitch.isChecked)
+        engine.setEchoAmountPercent(echoAmountSeekBar.progress)
+        engine.setEchoDelayMs(echoDelaySeekBar.progress)
         engine.setReverbEnabled(reverbSwitch.isChecked)
         engine.setVocalChainEnabled(vocalChainSwitch.isChecked)
         engine.setFxBypassed(bypassSwitch.isChecked)
         engine.setLowLatencyMode(lowLatencySwitch.isChecked)
-        engine.setLatencyOffsetMs(offsetSeekBar.progress)
         engine.setMonitoringEnabled(monitoringSwitch.isChecked)
         engine.start(selectedInputId, selectedOutputId)
         renderDiagnostics()
@@ -758,12 +767,12 @@ class MainActivity : Activity() {
                 "USB audio: ${if (usbDetected) "detected" else "not detected"}\n" +
                 "Bluetooth output: ${if (bluetoothDetected) "detected" else "not detected"}\n" +
                 "Ear Monitoring: ${if (monitoringSwitch.isChecked) "ON" else "OFF"}\n" +
-                "Manual latency offset: ${offsetSeekBar.progress} ms\n" +
+                "Echo amount: ${echoAmountSeekBar.progress}%\n" +
+                "Echo delay: ${echoDelaySeekBar.progress} ms\n" +
                 "Estimated latency — device dependent: unavailable until the engine is running\n" +
                 "Actual monitoring latency: device-dependent; not measured"
         } else {
-            val estimatedWithOffset = report.estimatedLatencyMs + offsetSeekBar.progress
-            val rating = latencyRating(estimatedWithOffset)
+            val rating = latencyRating(report.estimatedLatencyMs)
             val audioMode = if (report.lowLatencyRequested) {
                 "AudioRecord buffered; low-latency AudioTrack requested"
             } else {
@@ -787,8 +796,9 @@ class MainActivity : Activity() {
                 "USB audio: ${if (usbDetected) "detected" else "not detected"}\n" +
                 "Bluetooth output: ${if (bluetoothDetected) "detected" else "not detected"}\n" +
                 "Ear Monitoring: ${if (monitoringSwitch.isChecked) "ON" else "OFF"}\n" +
-                "Manual latency offset: ${offsetSeekBar.progress} ms${if (offsetSeekBar.progress > 0) " (intentional added delay)" else " (no added delay)"}\n" +
-                "Estimated latency — device dependent (configured I/O buffers + offset): ~$estimatedWithOffset ms — $rating\n" +
+                "Echo amount: ${echoAmountSeekBar.progress}%\n" +
+                "Echo delay: ${echoDelaySeekBar.progress} ms\n" +
+                "Estimated latency — device dependent (configured I/O buffers): ~${report.estimatedLatencyMs} ms — $rating\n" +
                 "Actual monitoring latency: device-dependent; not measured. This estimate is not a measured round-trip result." +
                 speakerWarning +
                 (report.fallbackDescription?.let { "\nFallback / routing note: $it" } ?: "")

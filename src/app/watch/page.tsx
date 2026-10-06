@@ -9,6 +9,7 @@ type WatchPageProps = {
     title?: string | string[];
     channel?: string | string[];
     q?: string | string[];
+    autoplay?: string | string[];
   }>;
 };
 
@@ -22,6 +23,7 @@ export default async function WatchPage({ searchParams }: WatchPageProps) {
   const title = decodeHtmlEntities(oneParam(params.title)) || "Karaoke video";
   const channelTitle = decodeHtmlEntities(oneParam(params.channel)) || "Karaoke video";
   const query = oneParam(params.q);
+  const autoPlay = oneParam(params.autoplay) !== "0";
   const backHref = query ? `/?q=${encodeURIComponent(query)}` : "/";
   const isValidVideoId = /^[A-Za-z0-9_-]{11}$/.test(videoId);
 
@@ -36,6 +38,7 @@ export default async function WatchPage({ searchParams }: WatchPageProps) {
         <section className="player-section">
           {isValidVideoId ? (
             <KaraokePlayback
+              autoPlay={autoPlay}
               query={query}
               video={{
                 videoId,

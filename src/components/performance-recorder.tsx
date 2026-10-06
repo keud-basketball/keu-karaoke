@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { EffectsStudio } from "@/components/effects-studio";
 import { PostRecordDialog } from "@/components/socials/post-record-dialog";
 
 type RecorderStatus = "ready" | "requesting" | "recording" | "recorded" | "error";
@@ -55,6 +56,7 @@ type PerformanceRecorderProps = {
 };
 
 export function PerformanceRecorder({ songTitle }: PerformanceRecorderProps) {
+  const recordingLocked = true;
   const [status, setStatus] = useState<RecorderStatus>("ready");
   const [message, setMessage] = useState("Your microphone audio is recorded directly without effects.");
   const [inputs, setInputs] = useState<AudioInput[]>([]);
@@ -62,6 +64,11 @@ export function PerformanceRecorder({ songTitle }: PerformanceRecorderProps) {
   const [noiseReduction, setNoiseReduction] = useState(true);
   const [recordingUrl, setRecordingUrl] = useState("");
   const [recordingBlob, setRecordingBlob] = useState<Blob | null>(null);
+  const [finalRecording, setFinalRecording] = useState<{
+    blob: Blob;
+    url: string;
+  } | null>(null);
+  const [effectsStudioOpen, setEffectsStudioOpen] = useState(false);
   const [postDialogOpen, setPostDialogOpen] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -97,6 +104,8 @@ export function PerformanceRecorder({ songTitle }: PerformanceRecorderProps) {
   }, []);
 
   useEffect(() => {
+    if (recordingLocked) return;
+
     mountedRef.current = true;
     void Promise.resolve().then(refreshInputs);
     navigator.mediaDevices?.addEventListener?.("devicechange", refreshInputs);
@@ -111,6 +120,12 @@ export function PerformanceRecorder({ songTitle }: PerformanceRecorderProps) {
     };
   }, [refreshInputs]);
 
+  useEffect(() => {
+    return () => {
+      if (finalRecording) URL.revokeObjectURL(finalRecording.url);
+    };
+  }, [finalRecording]);
+
   function stopStream() {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
@@ -121,6 +136,9 @@ export function PerformanceRecorder({ songTitle }: PerformanceRecorderProps) {
     recordingUrlRef.current = "";
     setRecordingUrl("");
     setRecordingBlob(null);
+    setFinalRecording(null);
+    setEffectsStudioOpen(false);
+    setPostDialogOpen(false);
     setStatus("ready");
     inputLostRef.current = false;
     setMessage("Recording deleted.");
@@ -128,6 +146,7 @@ export function PerformanceRecorder({ songTitle }: PerformanceRecorderProps) {
 
   async function startRecording() {
     if (status === "requesting" || status === "recording") return;
+    setEffectsStudioOpen(false);
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
       setStatus("error");
       setMessage("This browser does not support microphone recording. Try a current Android Chrome or desktop browser over HTTPS.");
@@ -218,6 +237,7 @@ export function PerformanceRecorder({ songTitle }: PerformanceRecorderProps) {
         if (recordingUrlRef.current) URL.revokeObjectURL(recordingUrlRef.current);
         recordingUrlRef.current = url;
         setRecordingBlob(blob);
+        setFinalRecording(null);
         setRecordingUrl(url);
         setStatus("recorded");
         setMessage(inputLostRef.current
@@ -267,6 +287,32 @@ export function PerformanceRecorder({ songTitle }: PerformanceRecorderProps) {
     setMessage("Finishing your recording…");
   }
 
+  if (recordingLocked) {
+    return (
+      <section
+        aria-labelledby="performance-recorder-heading"
+        className="performance-recorder performance-recorder-premium"
+      >
+        <div className="performance-recorder-heading">
+          <div>
+            <p className="eyebrow">🎤 RECORDING</p>
+            <h2 id="performance-recorder-heading">Premium Feature — Coming Soon</h2>
+          </div>
+          <span className="performance-recorder-premium-badge">
+            PREMIUM — COMING SOON
+          </span>
+        </div>
+        <p className="performance-recorder-premium-description">
+          Record your own voice with KEURAOKE vocal effects.
+        </p>
+        <p className="performance-recorder-note">
+          Premium users will be able to unlock recording, advanced vocal effects,
+          and enhanced karaoke tools.
+        </p>
+      </section>
+    );
+  }
+
   return (
     <section className="performance-recorder" aria-labelledby="performance-recorder-heading">
       <div className="performance-recorder-heading">
@@ -275,7 +321,7 @@ export function PerformanceRecorder({ songTitle }: PerformanceRecorderProps) {
           <h2 id="performance-recorder-heading">🎤 Record your performance</h2>
         </div>
         <span className={`performance-recorder-status performance-recorder-status-${status}`} aria-live="polite">
-          {status === "recording" ? "🔴 RECORDING" : status === "requesting" ? "STARTING" : status === "error" ? "MIC UNAVAILABLE" : status === "recorded" ? "READY TO PLAY" : "READY"}
+          {status === "recording" ? "🔴 RECORDING" : status === "requesting" ? "STARTING" : status === "error" ? "MIC UNAVAILABLE" : status === "recorded" ? "DONE RECORDING" : "READY"}
         </span>
       </div>
 
@@ -322,30 +368,51 @@ export function PerformanceRecorder({ songTitle }: PerformanceRecorderProps) {
         {recordingUrl && status !== "recording" && status !== "requesting" && (
           <>
             <audio aria-label="Play your recorded performance" controls controlsList="nodownload" src={recordingUrl} />
+            {recordingBlob && status === "recorded" && !effectsStudioOpen && (
+              <button
+                aria-controls="recording-effects-studio"
+                className="button button-play"
+                onClick={() => setEffectsStudioOpen(true)}
+                type="button"
+              >
+                OPEN EFFECTS STUDIO
+              </button>
+            )}
             <button className="performance-recorder-secondary" onClick={deleteRecording} type="button">
               🗑 DELETE
-            </button>
-            <button className="performance-recorder-secondary" onClick={() => setPostDialogOpen(true)} type="button">
-              📤 POST YOUR RECORD
             </button>
           </>
         )}
       </div>
+      {recordingBlob && recordingUrl && status === "recorded" && effectsStudioOpen && (
+        <div id="recording-effects-studio">
+          <EffectsStudio
+            onContinue={(blob) => {
+              if (finalRecording) URL.revokeObjectURL(finalRecording.url);
+              const url = URL.createObjectURL(blob);
+              setFinalRecording({ blob, url });
+              setPostDialogOpen(true);
+            }}
+            recording={recordingBlob}
+            recordingUrl={recordingUrl}
+          />
+        </div>
+      )}
       <p className="performance-recorder-message" role={status === "error" ? "alert" : "status"}>
         {message}
       </p>
       <p className="performance-recorder-note">
         Your selected microphone is recorded directly. KEURAOKE does not apply effects, capture the YouTube player, or upload the recording automatically.
       </p>
-      {postDialogOpen && recordingBlob && recordingUrl && (
+      {postDialogOpen && finalRecording && (
         <PostRecordDialog
           onClose={() => setPostDialogOpen(false)}
           onPosted={() => {
             setPostDialogOpen(false);
             setMessage("Posted successfully! Your performance is now in KEURAOKE Socials.");
           }}
-          recordingBlob={recordingBlob}
-          recordingUrl={recordingUrl}
+          recordingBlob={finalRecording.blob}
+          recordingUrl={finalRecording.url}
           songTitle={songTitle}
         />
       )}

@@ -7,9 +7,11 @@ export type SocialComment = {
 
 export type SocialPost = {
   id: string;
+  authorId?: string;
   username: string;
   avatar: string;
   isRemote?: boolean;
+  mediaType?: "audio" | "photo" | "video";
   songTitle: string;
   artist: string;
   caption: string;

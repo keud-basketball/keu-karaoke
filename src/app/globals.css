@@ -1137,6 +1137,192 @@ input {
   font-size: 10px;
 }
 
+.effects-studio {
+  display: grid;
+  gap: 13px;
+  padding: 15px;
+  border: 1px solid rgba(253, 91, 114, 0.24);
+  border-radius: 14px;
+  background: rgba(12, 12, 16, 0.72);
+}
+
+.effects-studio-heading,
+.effects-footer,
+.effects-ab-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.effects-studio-heading {
+  justify-content: space-between;
+}
+
+.effects-studio-heading .eyebrow {
+  margin: 0 0 4px;
+}
+
+.effects-studio-heading h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.effects-reset,
+.effects-use-original {
+  min-height: 40px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.effects-categories {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.effects-category {
+  min-height: 40px;
+  flex: 0 0 auto;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.effects-category.is-active {
+  border-color: rgba(253, 91, 114, 0.55);
+  background: rgba(253, 91, 114, 0.12);
+  color: #ffc0c9;
+}
+
+.effects-presets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.effects-preset {
+  display: grid;
+  min-width: 0;
+  min-height: 64px;
+  align-content: center;
+  gap: 4px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--foreground);
+  cursor: pointer;
+  text-align: left;
+}
+
+.effects-preset.is-selected {
+  border-color: rgba(253, 91, 114, 0.65);
+  background: rgba(253, 91, 114, 0.1);
+}
+
+.effects-preset strong {
+  font-size: 10px;
+}
+
+.effects-preset span {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.effects-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.effects-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 8px;
+  color: #c5bdc9;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.effects-control input {
+  width: 100%;
+  min-width: 0;
+  grid-column: 1;
+  accent-color: var(--accent);
+}
+
+.effects-control output {
+  color: var(--muted);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.effects-unavailable-control,
+.effects-error,
+.effects-success {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.effects-unavailable-control {
+  color: var(--muted);
+}
+
+.effects-error {
+  color: #ff9dab;
+}
+
+.effects-success {
+  color: #a2e5bd;
+}
+
+.effects-ab-controls .button {
+  min-height: 42px;
+  flex: 1 1 130px;
+}
+
+.effects-ab-controls .is-selected {
+  border-color: rgba(253, 91, 114, 0.55);
+  color: #ffc0c9;
+}
+
+.effects-studio > audio {
+  width: 100%;
+  height: 42px;
+}
+
+.effects-footer .button {
+  min-height: 42px;
+  flex: 1 1 130px;
+}
+
+.effects-footer .button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.effects-use-original {
+  flex: 1 1 100%;
+}
+
 .socials-section {
   display: grid;
   gap: 18px;
@@ -1223,13 +1409,65 @@ input {
   font-size: 19px;
 }
 
-.social-post-header > div:last-child {
+.social-post-header > div:nth-child(2) {
   display: grid;
   gap: 3px;
 }
 
 .social-post-header time {
   font-size: 10px;
+}
+
+.social-post-menu {
+  position: relative;
+  margin-left: auto;
+}
+
+.social-post-menu summary {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  list-style: none;
+}
+
+.social-post-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.social-post-menu > div {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 5px);
+  right: 0;
+  display: grid;
+  min-width: 140px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-raised);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.social-post-menu button {
+  min-height: 40px;
+  padding: 0 11px;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+}
+
+.social-post-menu button:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .social-post-song {
@@ -1259,6 +1497,24 @@ input {
   width: 100%;
   min-width: 0;
   height: 42px;
+}
+
+.social-post-image,
+.social-post-video {
+  display: block;
+  width: 100%;
+  max-height: min(70svh, 560px);
+  border-radius: 11px;
+  background: #050506;
+  object-fit: contain;
+}
+
+.social-post-image {
+  height: auto;
+}
+
+.social-post-video {
+  aspect-ratio: 16 / 9;
 }
 
 .social-post-actions {
@@ -1337,6 +1593,121 @@ input {
   margin-top: 9px;
   color: var(--muted);
   font-size: 10px;
+}
+
+.social-post-composer,
+.social-caption-edit,
+.social-report-form {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+}
+
+.social-post-composer h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.social-post-composer .eyebrow {
+  margin: 0 0 4px;
+}
+
+.social-post-composer label,
+.social-report-form label {
+  display: grid;
+  gap: 6px;
+  color: #c5bdc9;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.social-post-composer input,
+.social-post-composer textarea,
+.social-caption-edit textarea,
+.social-report-form textarea,
+.social-report-form select {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 12px;
+}
+
+.social-post-composer input[type="file"] {
+  padding: 8px;
+}
+
+.social-post-composer textarea,
+.social-caption-edit textarea,
+.social-report-form textarea {
+  resize: vertical;
+}
+
+.social-caption-edit .button,
+.social-report-form .button {
+  min-height: 40px;
+}
+
+.socials-load-more {
+  width: 100%;
+  min-height: 44px;
+}
+
+.artist-profile {
+  display: grid;
+  gap: 16px;
+}
+
+.artist-profile-header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+}
+
+.artist-profile-header > div:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+}
+
+.artist-profile-header .eyebrow {
+  margin: 0 0 4px;
+}
+
+.artist-profile-header h1 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 20px;
+}
+
+.artist-profile-counts {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.artist-profile-header .button {
+  min-height: 42px;
+  flex: 0 0 auto;
+  padding: 0 12px;
+}
+
+.artist-posts-heading {
+  margin: 0;
+  font-size: 17px;
 }
 
 .socials-error,

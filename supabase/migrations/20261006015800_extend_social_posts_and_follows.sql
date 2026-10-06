@@ -1,11 +1,29 @@
 alter table public.social_posts
   add column if not exists media_type text not null default 'audio';
 
-comment on column public.social_posts.recording_path is
-  'Private Storage path for audio, photo, or video post media.';
-
 do $$
 begin
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'social_posts'
+      and column_name = 'media_type'
+      and data_type = 'text'
+      and is_nullable = 'NO'
+      and column_default is not null
+  ) then
+    raise exception 'public.social_posts.media_type already exists with an incompatible type; review it before continuing.';
+  end if;
+
+  if exists (
+    select 1
+    from public.social_posts
+    where media_type is null or media_type not in ('audio', 'photo', 'video')
+  ) then
+    raise exception 'public.social_posts contains unsupported media_type values; review them before continuing.';
+  end if;
+
   if not exists (
     select 1
     from pg_constraint
@@ -50,65 +68,88 @@ grant select, insert, delete on public.profile_follows to authenticated;
 grant select, insert on public.social_post_reports to authenticated;
 grant update (caption) on public.social_posts to authenticated;
 
-drop policy if exists "Authenticated users can view profile follows" on public.profile_follows;
-create policy "Authenticated users can view profile follows"
-  on public.profile_follows for select to authenticated
-  using (public.is_google_user());
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profile_follows'
+      and policyname = 'Authenticated users can view profile follows'
+  ) then
+    create policy "Authenticated users can view profile follows"
+      on public.profile_follows for select to authenticated
+      using (public.is_google_user());
+  end if;
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profile_follows'
+      and policyname = 'Users can follow profiles as themselves'
+  ) then
+    create policy "Users can follow profiles as themselves"
+      on public.profile_follows for insert to authenticated
+      with check (
+        public.is_google_user()
+        and (select auth.uid()) = follower_id
+        and follower_id <> following_id
+      );
+  end if;
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'profile_follows'
+      and policyname = 'Users can unfollow profiles as themselves'
+  ) then
+    create policy "Users can unfollow profiles as themselves"
+      on public.profile_follows for delete to authenticated
+      using (public.is_google_user() and (select auth.uid()) = follower_id);
+  end if;
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'social_post_reports'
+      and policyname = 'Users can report posts as themselves'
+  ) then
+    create policy "Users can report posts as themselves"
+      on public.social_post_reports for insert to authenticated
+      with check (public.is_google_user() and (select auth.uid()) = reporter_id);
+  end if;
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'social_post_reports'
+      and policyname = 'Users can view their own post reports'
+  ) then
+    create policy "Users can view their own post reports"
+      on public.social_post_reports for select to authenticated
+      using (public.is_google_user() and (select auth.uid()) = reporter_id);
+  end if;
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'social_posts'
+      and policyname = 'Users can edit their own social posts'
+  ) then
+    create policy "Users can edit their own social posts"
+      on public.social_posts for update to authenticated
+      using (public.is_google_user() and (select auth.uid()) = auth_user_id)
+      with check (public.is_google_user() and (select auth.uid()) = auth_user_id);
+  end if;
+end;
+$$;
 
-drop policy if exists "Users can follow profiles as themselves" on public.profile_follows;
-create policy "Users can follow profiles as themselves"
-  on public.profile_follows for insert to authenticated
-  with check (
-    public.is_google_user()
-    and (select auth.uid()) = follower_id
-    and follower_id <> following_id
-  );
-
-drop policy if exists "Users can unfollow profiles as themselves" on public.profile_follows;
-create policy "Users can unfollow profiles as themselves"
-  on public.profile_follows for delete to authenticated
-  using (public.is_google_user() and (select auth.uid()) = follower_id);
-
-drop policy if exists "Users can report posts as themselves" on public.social_post_reports;
-create policy "Users can report posts as themselves"
-  on public.social_post_reports for insert to authenticated
-  with check (public.is_google_user() and (select auth.uid()) = reporter_id);
-
-drop policy if exists "Users can view their own post reports" on public.social_post_reports;
-create policy "Users can view their own post reports"
-  on public.social_post_reports for select to authenticated
-  using (public.is_google_user() and (select auth.uid()) = reporter_id);
-
-drop policy if exists "Users can edit their own social posts" on public.social_posts;
-create policy "Users can edit their own social posts"
-  on public.social_posts for update to authenticated
-  using (public.is_google_user() and (select auth.uid()) = auth_user_id)
-  with check (public.is_google_user() and (select auth.uid()) = auth_user_id);
-
-drop policy if exists "Users can upload their own performances" on storage.objects;
-create policy "Users can upload their own performances"
-  on storage.objects for insert to authenticated
-  with check (
-    public.is_google_user()
-    and bucket_id = 'social-recordings'
-    and (storage.foldername(name))[1] = (select auth.uid()::text)
-    and lower(storage.extension(name)) in (
-      'webm', 'm4a', 'mp4', 'ogg', 'mp3', 'wav',
-      'jpg', 'jpeg', 'png', 'webp'
-    )
-  );
-
-update storage.buckets
-set allowed_mime_types = array[
-  'audio/webm',
-  'audio/mp4',
-  'audio/ogg',
-  'audio/mpeg',
-  'audio/wav',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'video/mp4',
-  'video/webm'
-]
-where id = 'social-recordings';
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage' and tablename = 'objects'
+      and policyname = 'Users can upload their own Socials media'
+  ) then
+    create policy "Users can upload their own Socials media"
+      on storage.objects for insert to authenticated
+      with check (
+        public.is_google_user()
+        and bucket_id = 'social-recordings'
+        and (storage.foldername(name))[1] = (select auth.uid()::text)
+        and lower(storage.extension(name)) in (
+          'webm', 'm4a', 'mp4', 'ogg', 'mp3', 'wav',
+          'jpg', 'jpeg', 'png', 'webp'
+        )
+      );
+  end if;
+end;
+$$;

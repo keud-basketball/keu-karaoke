@@ -1,5 +1,3 @@
-export type EffectCategory = "signature" | "vocal" | "space";
-
 export type EffectSettings = {
   beauty: number;
   clarity: number;
@@ -14,7 +12,6 @@ export type EffectSettings = {
 export type EffectPreset = {
   id: string;
   name: string;
-  category: EffectCategory;
   description: string;
   settings: EffectSettings;
 };
@@ -30,59 +27,90 @@ const neutral: EffectSettings = {
   vocalVolume: 85,
 };
 
-function preset(
-  id: string,
-  name: string,
-  category: EffectCategory,
-  description: string,
-  settings: Partial<EffectSettings>,
-): EffectPreset {
-  return { id, name, category, description, settings: { ...neutral, ...settings } };
-}
-
 export const EFFECT_PRESETS: EffectPreset[] = [
-  preset("studio-glow", "STUDIO GLOW", "signature", "Studio Beauty + Studio Echo", { beauty: 48, clarity: 42, warmth: 24, echo: 25, reverb: 12, delay: 240, vocalVolume: 88 }),
-  preset("sweet-romance", "SWEET ROMANCE", "signature", "Sweet Vocal + Soft Echo + Light Reverb", { beauty: 30, clarity: 25, warmth: 48, echo: 20, reverb: 22, delay: 310, vocalVolume: 86 }),
-  preset("pro-singer-signature", "PRO SINGER", "signature", "Pro Vocal + Plate Reverb + Studio Echo", { beauty: 38, clarity: 55, warmth: 20, echo: 25, reverb: 32, delay: 225, vocalVolume: 90 }),
-  preset("80s-love", "80s LOVE", "signature", "80s Studio Vocal + 80s Echo + Plate Reverb", { beauty: 30, clarity: 45, warmth: 48, echo: 38, reverb: 40, delay: 370, doubler: 24, vocalVolume: 84 }),
-  preset("dreamy-love", "DREAMY LOVE", "signature", "Warm Vocal + Dream Echo + Hall Reverb", { beauty: 26, clarity: 24, warmth: 62, echo: 34, reverb: 58, delay: 410, vocalVolume: 82 }),
-  preset("crystal-dream", "CRYSTAL DREAM", "signature", "Crystal Voice + Dream Echo + Light Reverb", { beauty: 42, clarity: 78, warmth: 12, echo: 30, reverb: 30, delay: 360, vocalVolume: 88 }),
-  preset("power-stage", "POWER STAGE", "signature", "Powerful Vocal + Big Stage + Echo", { beauty: 35, clarity: 55, warmth: 42, echo: 42, reverb: 62, delay: 280, vocalVolume: 94 }),
-  preset("karaoke-pro", "KARAOKE PRO", "signature", "Karaoke Vocal + Classic Karaoke Echo + Room Reverb", { beauty: 42, clarity: 44, warmth: 28, echo: 35, reverb: 25, delay: 280, vocalVolume: 92 }),
-  preset("sweet-studio", "SWEET STUDIO", "signature", "Sweet Vocal + Plate Reverb + Soft Echo", { beauty: 35, clarity: 35, warmth: 44, echo: 20, reverb: 45, delay: 310, vocalVolume: 87 }),
-  preset("heavenly-voice", "HEAVENLY VOICE", "signature", "Warm Vocal + Heavenly Reverb + Dream Echo", { beauty: 24, clarity: 32, warmth: 62, echo: 30, reverb: 70, delay: 430, vocalVolume: 82 }),
-  preset("retro-rock", "RETRO ROCK", "signature", "Warm Vocal + Slapback Echo + 80s Reverb", { beauty: 28, clarity: 50, warmth: 58, echo: 42, reverb: 42, delay: 115, doubler: 18, vocalVolume: 91 }),
-  preset("ultimate-vocal", "ULTIMATE VOCAL", "signature", "Beauty + Clarity + Compression + Echo + Reverb", { beauty: 58, clarity: 62, warmth: 34, echo: 25, reverb: 28, delay: 250, vocalVolume: 90 }),
-
-  preset("studio-beauty", "Studio Beauty", "vocal", "Gentle smoothing and controlled dynamics", { beauty: 55, clarity: 35, warmth: 25, vocalVolume: 88 }),
-  preset("crystal-voice", "Crystal Voice", "vocal", "Bright, clear vocal presence", { beauty: 38, clarity: 78, warmth: 10, vocalVolume: 88 }),
-  preset("warm-vocal", "Warm Vocal", "vocal", "Soft low-mid warmth", { beauty: 25, clarity: 25, warmth: 65, vocalVolume: 86 }),
-  preset("pro-vocal", "Pro Vocal", "vocal", "Balanced clarity and gentle compression", { beauty: 45, clarity: 55, warmth: 25, vocalVolume: 92 }),
-  preset("sweet-vocal", "Sweet Vocal", "vocal", "Smooth, soft vocal tone", { beauty: 46, clarity: 30, warmth: 48, vocalVolume: 87 }),
-  preset("powerful-vocal", "Powerful Vocal", "vocal", "Presence and stronger level control", { beauty: 45, clarity: 58, warmth: 40, vocalVolume: 94 }),
-  preset("smooth-vocal", "Smooth Vocal", "vocal", "Warmth with softened brightness", { beauty: 56, clarity: 22, warmth: 52, vocalVolume: 86 }),
-  preset("80s-studio-vocal", "80s Studio Vocal", "vocal", "Bright retro tone with gentle doubling", { beauty: 35, clarity: 52, warmth: 48, doubler: 26, vocalVolume: 85 }),
-  preset("beauty-clarity", "Beauty + Clarity", "vocal", "Polished tone with extra intelligibility", { beauty: 55, clarity: 65, warmth: 20, vocalVolume: 89 }),
-
-  preset("studio-echo", "Studio Echo", "space", "Short controlled echo", { echo: 24, delay: 230 }),
-  preset("classic-karaoke-echo", "Classic Karaoke Echo", "space", "Familiar rhythmic karaoke repeats", { echo: 42, delay: 290 }),
-  preset("80s-echo", "80s Echo", "space", "Longer retro vocal repeats", { echo: 42, reverb: 22, delay: 380 }),
-  preset("soft-echo", "Soft Echo", "space", "Subtle background repeats", { echo: 19, delay: 310 }),
-  preset("deep-echo", "Deep Echo", "space", "Long, lower-feeling vocal space", { echo: 48, warmth: 25, delay: 480 }),
-  preset("dream-echo", "Dream Echo", "space", "Floating, soft repeats", { echo: 34, reverb: 24, delay: 410 }),
-  preset("slapback-echo", "Slapback Echo", "space", "Single short slap-style reflection", { echo: 35, delay: 105 }),
-  preset("hall-reverb", "Hall Reverb", "space", "Large, smooth room tail", { reverb: 62 }),
-  preset("plate-reverb", "Plate Reverb", "space", "Bright, even studio-style tail", { reverb: 44, clarity: 38 }),
-  preset("room-reverb", "Room Reverb", "space", "Small natural room", { reverb: 22 }),
-  preset("big-stage", "Big Stage", "space", "Wide stage-like space", { echo: 32, reverb: 65, delay: 325 }),
-  preset("heavenly-reverb", "Heavenly Reverb", "space", "Long, soft ambient tail", { reverb: 75, warmth: 32 }),
+  {
+    id: "reverb",
+    name: "🌊 REVERB",
+    description: "Clean karaoke vocal with an upfront sound and a clear room tail.",
+    settings: { ...neutral, clarity: 38, warmth: 28, reverb: 56, vocalVolume: 88 },
+  },
+  {
+    id: "studio",
+    name: "🎙️ STUDIO",
+    description: "Fuller vocal presence, smooth compression, and small-room ambience.",
+    settings: {
+      ...neutral,
+      beauty: 56,
+      clarity: 58,
+      warmth: 34,
+      reverb: 22,
+      vocalVolume: 90,
+    },
+  },
+  {
+    id: "aor-1980s",
+    name: "📼 AOR 1980'S",
+    description: "Warm late-80s vocal with subtle centered doubling, a controlled echo, and plate ambience.",
+    settings: {
+      ...neutral,
+      beauty: 36,
+      clarity: 48,
+      warmth: 56,
+      echo: 42,
+      reverb: 40,
+      delay: 240,
+      doubler: 18,
+      vocalVolume: 88,
+    },
+  },
+  {
+    id: "sweet-echo",
+    name: "💖 SWEET ECHO",
+    description: "Warm romantic tone with smooth, clearly audible vocal repeats.",
+    settings: {
+      ...neutral,
+      beauty: 38,
+      clarity: 40,
+      warmth: 48,
+      echo: 40,
+      reverb: 30,
+      delay: 300,
+      vocalVolume: 88,
+    },
+  },
 ];
-
-export const DEFAULT_EFFECT_SETTINGS = { ...neutral };
 
 const MAX_EFFECT_DURATION_SECONDS = 240;
 const MAX_EFFECT_INPUT_BYTES = 50 * 1024 * 1024;
 const MAX_EFFECT_OUTPUT_BYTES = 50 * 1024 * 1024;
+const MAX_CONSTRAINED_DURATION_SECONDS = 90;
+const MAX_CONSTRAINED_INPUT_BYTES = 15 * 1024 * 1024;
+const MAX_CONSTRAINED_WORKING_BYTES = 160 * 1024 * 1024;
+const MAX_DESKTOP_WORKING_BYTES = 512 * 1024 * 1024;
+
+function getProcessingLimits() {
+  const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+  const hasCoarsePointer =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(pointer: coarse)").matches;
+  const isConstrained =
+    hasCoarsePointer ||
+    (typeof navigator.hardwareConcurrency === "number" &&
+      navigator.hardwareConcurrency <= 4) ||
+    (deviceMemory !== undefined && deviceMemory <= 4);
+
+  return {
+    maxDurationSeconds: isConstrained
+      ? MAX_CONSTRAINED_DURATION_SECONDS
+      : MAX_EFFECT_DURATION_SECONDS,
+    maxInputBytes: isConstrained
+      ? MAX_CONSTRAINED_INPUT_BYTES
+      : MAX_EFFECT_INPUT_BYTES,
+    maxWorkingBytes: isConstrained
+      ? MAX_CONSTRAINED_WORKING_BYTES
+      : MAX_DESKTOP_WORKING_BYTES,
+  };
+}
 
 function createReverbImpulse(context: OfflineAudioContext, amount: number) {
   const duration = 0.35 + amount * 2.5;
@@ -133,7 +161,7 @@ function encodePcmWav(buffer: AudioBuffer) {
       peak = Math.max(peak, Math.abs(channel[i]));
     }
   }
-  const scale = peak > 0.94 ? 0.94 / peak : 1;
+  const scale = peak > 0 ? 0.94 / peak : 1;
   let offset = 44;
   for (let frame = 0; frame < frames; frame += 1) {
     for (let channel = 0; channel < channels; channel += 1) {
@@ -150,8 +178,16 @@ export async function renderVocalEffects(
   recording: Blob,
   settings: EffectSettings,
 ): Promise<Blob> {
-  if (recording.size === 0 || recording.size > MAX_EFFECT_INPUT_BYTES) {
-    throw new Error("Choose a non-empty recording smaller than 50 MB to process.");
+  if (typeof window === "undefined" || typeof navigator === "undefined") {
+    throw new Error("Effects Studio needs a supported browser. Your original recording is unchanged.");
+  }
+  const limits = getProcessingLimits();
+  if (recording.size === 0 || recording.size > limits.maxInputBytes) {
+    throw new Error(
+      limits.maxInputBytes === MAX_CONSTRAINED_INPUT_BYTES
+        ? "This device can safely process recordings up to 15 MB. Your original recording is unchanged; use a shorter recording or post the original."
+        : "Choose a non-empty recording smaller than 50 MB to process.",
+    );
   }
   if (typeof OfflineAudioContext === "undefined") {
     throw new Error("Audio effects are not supported by this browser. Your original recording is unchanged.");
@@ -160,12 +196,21 @@ export async function renderVocalEffects(
   const decoded = await new OfflineAudioContext(1, 1, 44100).decodeAudioData(
     await recording.arrayBuffer(),
   );
-  if (decoded.duration > MAX_EFFECT_DURATION_SECONDS) {
-    throw new Error("Effects Studio supports recordings up to 4 minutes. Your original recording is unchanged.");
+  if (!Number.isFinite(decoded.duration) || decoded.duration <= 0) {
+    throw new Error("This recording could not be decoded. Your original recording is unchanged; retry or post the original.");
+  }
+  if (decoded.duration > limits.maxDurationSeconds) {
+    const limit = limits.maxDurationSeconds === MAX_CONSTRAINED_DURATION_SECONDS
+      ? "90 seconds on this device"
+      : "4 minutes";
+    throw new Error(`Effects Studio supports recordings up to ${limit}. Your original recording is unchanged; retry with a shorter recording or post the original.`);
+  }
+  if (decoded.numberOfChannels < 1 || decoded.numberOfChannels > 2) {
+    throw new Error("Effects Studio supports mono or stereo recordings only. Your original recording is unchanged; post the original instead.");
   }
 
   const sampleRate = Math.min(decoded.sampleRate, 48000);
-  const channels = Math.max(1, Math.min(decoded.numberOfChannels, 2));
+  const channels = decoded.numberOfChannels;
   const echoTail = settings.echo > 0
     ? 1.2 + (settings.echo / 100) * 2.2
     : 0;
@@ -174,6 +219,19 @@ export async function renderVocalEffects(
     : 0;
   const tailSeconds = Math.max(0.15, echoTail, reverbTail);
   const frames = Math.ceil((decoded.duration + tailSeconds) * sampleRate);
+  const decodedBytes = decoded.length * decoded.numberOfChannels * Float32Array.BYTES_PER_ELEMENT;
+  const renderedBytes = frames * channels * Float32Array.BYTES_PER_ELEMENT;
+  const outputBytes = 44 + frames * channels * 2;
+  const estimatedWorkingBytes =
+    recording.size * 2 + decodedBytes + renderedBytes + outputBytes * 2;
+  if (
+    !Number.isSafeInteger(frames) ||
+    estimatedWorkingBytes > limits.maxWorkingBytes ||
+    outputBytes > MAX_EFFECT_OUTPUT_BYTES
+  ) {
+    throw new Error("This recording needs more memory than is safe for Effects Studio on this device. Your original recording is unchanged; retry with a shorter recording or post the original.");
+  }
+
   const context = new OfflineAudioContext(channels, frames, sampleRate);
   const source = context.createBufferSource();
   source.buffer = decoded;
@@ -213,9 +271,9 @@ export async function renderVocalEffects(
     const delay = context.createDelay(1);
     delay.delayTime.value = settings.delay / 1000;
     const feedback = context.createGain();
-    feedback.gain.value = Math.min(0.42, (settings.echo / 100) * 0.46);
+    feedback.gain.value = Math.min(0.4, (settings.echo / 100) * 0.44);
     const wet = context.createGain();
-    wet.gain.value = (settings.echo / 100) * 0.42;
+    wet.gain.value = (settings.echo / 100) * 0.5;
     clarity.connect(delay);
     delay.connect(wet);
     wet.connect(master);
@@ -226,10 +284,14 @@ export async function renderVocalEffects(
   if (settings.reverb > 0) {
     const convolver = context.createConvolver();
     convolver.buffer = createReverbImpulse(context, settings.reverb / 100);
+    const lowCut = context.createBiquadFilter();
+    lowCut.type = "highpass";
+    lowCut.frequency.value = 180;
     const wet = context.createGain();
-    wet.gain.value = (settings.reverb / 100) * 0.38;
+    wet.gain.value = (settings.reverb / 100) * 0.44;
     clarity.connect(convolver);
-    convolver.connect(wet);
+    convolver.connect(lowCut);
+    lowCut.connect(wet);
     wet.connect(master);
   }
 

@@ -4,12 +4,14 @@ import Script from "next/script";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 type KaraokePlayerProps = {
+  autoPlay?: boolean;
   videoId: string;
   onError?: (videoId: string) => void;
   unavailable?: boolean;
 };
 
 export function KaraokePlayer({
+  autoPlay = true,
   videoId,
   onError,
   unavailable = false,
@@ -51,7 +53,7 @@ export function KaraokePlayer({
     playerInstance.current = new window.YT.Player(playerTarget.current, {
       videoId,
       playerVars: {
-        autoplay: 1,
+        autoplay: autoPlay ? 1 : 0,
         playsinline: 1,
         origin: window.location.origin,
       },
@@ -70,7 +72,7 @@ export function KaraokePlayer({
       playerInstance.current?.destroy();
       playerInstance.current = null;
     };
-  }, [apiLoaded, videoId]);
+  }, [apiLoaded, autoPlay, videoId]);
 
   return (
     <>

@@ -7,6 +7,7 @@ import { WatchSongActions } from "@/components/watch-song-actions";
 import type { KaraokeVideo } from "@/lib/search-types";
 
 type KaraokePlaybackProps = {
+  autoPlay?: boolean;
   video: KaraokeVideo;
   query: string;
 };
@@ -40,7 +41,11 @@ function isSearchResponse(value: unknown): value is SearchResponse {
   );
 }
 
-export function KaraokePlayback({ video, query }: KaraokePlaybackProps) {
+export function KaraokePlayback({
+  autoPlay = true,
+  video,
+  query,
+}: KaraokePlaybackProps) {
   const [currentVideo, setCurrentVideo] = useState(video);
   const [unavailableVideoId, setUnavailableVideoId] = useState<string | null>(
     null,
@@ -88,6 +93,7 @@ export function KaraokePlayback({ video, query }: KaraokePlaybackProps) {
       <p className="eyebrow">NOW SINGING</p>
       <h1>{currentVideo.title}</h1>
       <KaraokePlayer
+        autoPlay={autoPlay}
         videoId={currentVideo.videoId}
         onError={tryNextVideo}
         unavailable={unavailableVideoId === currentVideo.videoId}

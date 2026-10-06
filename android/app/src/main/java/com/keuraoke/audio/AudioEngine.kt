@@ -16,7 +16,6 @@ import kotlin.math.max
 import kotlin.math.min
 
 data class VocalPresetProfile(
-    val echoDelayMs: Int = 0,
     val echoMix: Float = 0f,
     val echoFeedback: Float = 0f,
     val earlyReflectionMs: Int = 0,
@@ -47,7 +46,7 @@ enum class VoicePreset(val title: String, val profile: VocalPresetProfile) {
     ),
     EIGHTIES_AOR(
         "80s AOR",
-        VocalPresetProfile(echoDelayMs = 82, echoMix = 0.075f, echoFeedback = 0.12f,
+        VocalPresetProfile(echoMix = 0.075f, echoFeedback = 0.12f,
             earlyReflectionMs = 18, lateReflectionMs = 42, reverbMix = 0.06f,
             earlyFeedback = 0.12f, lateFeedback = 0.08f, lowMidCut = 0.14f,
             presence = 0.16f, compressorThreshold = 17_000f, compressorRatio = 2.4f,
@@ -55,7 +54,7 @@ enum class VoicePreset(val title: String, val profile: VocalPresetProfile) {
     ),
     EIGHTIES_POWER_BALLAD(
         "80s POWER BALLAD",
-        VocalPresetProfile(echoDelayMs = 92, echoMix = 0.09f, echoFeedback = 0.16f,
+        VocalPresetProfile(echoMix = 0.09f, echoFeedback = 0.16f,
             earlyReflectionMs = 28, lateReflectionMs = 78, reverbMix = 0.12f,
             earlyFeedback = 0.2f, lateFeedback = 0.15f, presence = 0.07f,
             compressorThreshold = 18_000f, compressorRatio = 2.2f, saturation = 1.025f),
@@ -75,7 +74,7 @@ enum class VoicePreset(val title: String, val profile: VocalPresetProfile) {
     ),
     EIGHTIES_ROCK(
         "80s ROCK",
-        VocalPresetProfile(echoDelayMs = 78, echoMix = 0.05f, echoFeedback = 0.1f,
+        VocalPresetProfile(echoMix = 0.05f, echoFeedback = 0.1f,
             earlyReflectionMs = 18, lateReflectionMs = 42, reverbMix = 0.055f,
             earlyFeedback = 0.1f, lateFeedback = 0.07f, lowMidCut = 0.12f,
             presence = 0.2f, compressorThreshold = 16_000f, compressorRatio = 2.5f,
@@ -89,7 +88,7 @@ enum class VoicePreset(val title: String, val profile: VocalPresetProfile) {
     ),
     ECHO(
         "ECHO",
-        VocalPresetProfile(echoDelayMs = 105, echoMix = 0.24f, echoFeedback = 0.18f,
+        VocalPresetProfile(echoMix = 0.24f, echoFeedback = 0.18f,
             presence = 0.04f, compressorThreshold = 22_000f, compressorRatio = 1.5f),
     ),
     REVERB(
@@ -150,7 +149,10 @@ class AudioEngine(
     private var preset = VoicePreset.CLEAN_STUDIO
 
     @Volatile
-    private var latencyOffsetMs = 0
+    private var echoAmountPercent = 30
+
+    @Volatile
+    private var echoDelayMs = 120
 
     @Volatile
     private var activeRecord: AudioRecord? = null
@@ -228,8 +230,12 @@ class AudioEngine(
         preset = value
     }
 
-    fun setLatencyOffsetMs(value: Int) {
-        latencyOffsetMs = value.coerceIn(0, 200)
+    fun setEchoAmountPercent(value: Int) {
+        echoAmountPercent = value.coerceIn(0, 100)
+    }
+
+    fun setEchoDelayMs(value: Int) {
+        echoDelayMs = value.coerceIn(0, 700)
     }
 
     fun setLowLatencyMode(enabled: Boolean) {
@@ -511,11 +517,10 @@ class AudioEngine(
         val input = ShortArray(blockFrames)
         val output = ShortArray(blockFrames * 2)
         val sampleRate = session.sampleRate
-        val echoBuffer = ShortArray(max(sampleRate * 125 / 1_000, 64))
+        val echoBuffer = ShortArray(max(sampleRate * 700 / 1_000 + 1, 64))
         val reverbShort = ShortArray(max(sampleRate * 50 / 1_000, 64))
         val reverbLong = ShortArray(max(sampleRate * 100 / 1_000, 64))
-        val offsetBuffer = ShortArray(sampleRate / 5 + 1)
-        val processor = VoiceProcessor(sampleRate, echoBuffer, reverbShort, reverbLong, offsetBuffer)
+        val processor = VoiceProcessor(sampleRate, echoBuffer, reverbShort, reverbLong)
         var observedMonitoringGeneration = -1L
         var reportedActiveOutputRoute = !monitoringEnabled
 
@@ -571,31 +576,62 @@ class AudioEngine(
         private val echoBuffer: ShortArray,
         private val reverbShort: ShortArray,
         private val reverbLong: ShortArray,
-        private val offsetBuffer: ShortArray,
     ) {
         private var echoCursor = 0
         private var shortCursor = 0
         private var longCursor = 0
-        private var offsetCursor = 0
-        private var previousOffsetMs = 0
         private var envelope = 0f
         private var lowFrequency = 0f
+        private var previousPreset: VoicePreset? = null
+        private var previousEchoEnabled: Boolean? = null
+        private var previousEchoAmountPercent: Int? = null
+        private var previousEchoDelayMs: Int? = null
+        private var previousReverbEnabled: Boolean? = null
+        private var previousBypass: Boolean? = null
+        private var previousVocalChainEnabled: Boolean? = null
 
         fun process(input: ShortArray, output: ShortArray, frames: Int) {
             val bypass = fxBypassed
-            val offsetMs = latencyOffsetMs
             val selectedPreset = preset
             val useEcho = echoEnabled
+            val amountPercent = echoAmountPercent
+            val delayMs = echoDelayMs
             val useReverb = reverbEnabled
             val useVocalChain = vocalChainEnabled
 
-            if (offsetMs == 0 && previousOffsetMs > 0) {
-                offsetBuffer.fill(0)
-                offsetCursor = 0
+            if (
+                selectedPreset != previousPreset ||
+                useEcho != previousEchoEnabled ||
+                useReverb != previousReverbEnabled ||
+                bypass != previousBypass ||
+                useVocalChain != previousVocalChainEnabled
+            ) {
+                echoBuffer.fill(0)
+                reverbShort.fill(0)
+                reverbLong.fill(0)
+                echoCursor = 0
+                shortCursor = 0
+                longCursor = 0
+                envelope = 0f
+                lowFrequency = 0f
+                previousPreset = selectedPreset
+                previousEchoEnabled = useEcho
+                previousReverbEnabled = useReverb
+                previousBypass = bypass
+                previousVocalChainEnabled = useVocalChain
             }
-            previousOffsetMs = offsetMs
 
-            if ((bypass || (!useEcho && !useReverb && !useVocalChain)) && offsetMs == 0) {
+            if (
+                amountPercent != previousEchoAmountPercent ||
+                delayMs != previousEchoDelayMs
+            ) {
+                echoBuffer.fill(0)
+                echoCursor = 0
+                previousEchoAmountPercent = amountPercent
+                previousEchoDelayMs = delayMs
+            }
+
+            if (bypass || (!useEcho && !useReverb && !useVocalChain)) {
                 for (frame in 0 until frames) {
                     val sample = input[frame]
                     output[frame * 2] = sample
@@ -604,30 +640,12 @@ class AudioEngine(
                 return
             }
 
-            val offsetDelayFrames = offsetMs * sampleRate / 1_000
             for (frame in 0 until frames) {
-                val dry = if (offsetMs > 0) {
-                    val readIndex =
-                        (offsetCursor - offsetDelayFrames + offsetBuffer.size) % offsetBuffer.size
-                    val delayed = offsetBuffer[readIndex]
-                    offsetBuffer[offsetCursor] = input[frame]
-                    offsetCursor = (offsetCursor + 1) % offsetBuffer.size
-                    delayed.toFloat()
-                } else {
-                    input[frame].toFloat()
-                }
-
-                if (bypass) {
-                    val sample = dry.toInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
-                    output[frame * 2] = sample
-                    output[frame * 2 + 1] = sample
-                    continue
-                }
-
+                val dry = input[frame].toFloat()
                 val profile = selectedPreset.profile
                 var wet = dry
-                if (useEcho) {
-                    val delayFrames = (profile.echoDelayMs * sampleRate / 1_000)
+                if (useEcho && amountPercent > 0 && delayMs > 0) {
+                    val delayFrames = (delayMs * sampleRate / 1_000)
                         .coerceIn(1, echoBuffer.size - 1)
                     val echoIndex = (echoCursor - delayFrames + echoBuffer.size) % echoBuffer.size
                     val echo = echoBuffer[echoIndex].toFloat()
@@ -635,7 +653,7 @@ class AudioEngine(
                         .toInt()
                         .coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt())
                         .toShort()
-                    wet += echo * profile.echoMix
+                    wet += echo * profile.echoMix * amountPercent / 30f
                     echoCursor = (echoCursor + 1) % echoBuffer.size
                 }
 

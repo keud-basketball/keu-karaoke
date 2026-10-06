@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { GoogleLoginCard } from "@/components/auth/google-login-card";
@@ -314,6 +315,30 @@ function ProfileForm({ profile, userId, onCancel, onSaved }: ProfileFormProps) {
           </button>
         </div>
       </form>
+      <section aria-labelledby="profile-gcash-heading" className="support-section">
+          <h2 id="profile-gcash-heading">❤️ SUPPORT KEURAOKE</h2>
+
+            <p className="support-scan-label">
+                SCAN TO SUPPORT
+                  </p>
+
+                    <Image
+                        src="/gcash-qr.png"
+                            alt="KEURAOKE GCash support QR code"
+                                className="support-qr"
+                                    width={1080}
+                                        height={1928}
+                                            unoptimized
+                                              />
+
+                                                <p className="support-message">
+                                                    I have my GCash QR Code for anyone who wants to support me.
+                                                        Any amount, big or small, helps me continue building KEURAOKE.
+                                                            <br />
+                                                                <br />
+                                                                    Thank you so much for your support. ❤️
+                                                                      </p>
+                                                                      </section>
     </section>
   );
 }

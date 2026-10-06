@@ -31,6 +31,7 @@ export type Database = {
           artist: string;
           caption: string;
           recording_path: string;
+          media_type: "audio" | "photo" | "video";
           created_at: string;
         };
         Insert: {
@@ -40,6 +41,7 @@ export type Database = {
           artist: string;
           caption?: string;
           recording_path: string;
+          media_type?: "audio" | "photo" | "video";
           created_at?: string;
         };
         Update: {
@@ -47,6 +49,7 @@ export type Database = {
           artist?: string;
           caption?: string;
           recording_path?: string;
+          media_type?: "audio" | "photo" | "video";
         };
         Relationships: [];
       };
@@ -84,6 +87,47 @@ export type Database = {
         };
         Update: {
           content?: string;
+        };
+        Relationships: [];
+      };
+      profile_follows: {
+        Row: {
+          follower_id: string;
+          following_id: string;
+          created_at: string;
+        };
+        Insert: {
+          follower_id: string;
+          following_id: string;
+          created_at?: string;
+        };
+        Update: {
+          follower_id?: string;
+          following_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      social_post_reports: {
+        Row: {
+          id: string;
+          post_id: string;
+          reporter_id: string;
+          reason: "spam" | "harassment" | "inappropriate" | "other";
+          details: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          reporter_id: string;
+          reason: "spam" | "harassment" | "inappropriate" | "other";
+          details?: string;
+          created_at?: string;
+        };
+        Update: {
+          reason?: string;
+          details?: string;
         };
         Relationships: [];
       };

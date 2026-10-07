@@ -315,7 +315,7 @@ function ProfileForm({ profile, userId, onCancel, onSaved }: ProfileFormProps) {
           </button>
         </div>
       </form>
-      <section aria-labelledby="profile-gcash-heading" className="support-section">
+      <section aria-labelledby="profile-gcash-heading" className="support-card">
           <h2 id="profile-gcash-heading">❤️ SUPPORT KEURAOKE</h2>
 
             <p className="support-scan-label">

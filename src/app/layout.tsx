@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import "./globals.css";
@@ -78,6 +79,8 @@ export default function RootLayout({
           {children}
           <BottomNavigation />
         </AuthProvider>
+
+<Analytics />
       </body>
     </html>
   );

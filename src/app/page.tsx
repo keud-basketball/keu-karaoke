@@ -28,7 +28,7 @@ export default async function Home({ searchParams }: HomePageProps) {
   const query = typeof params.q === "string" ? params.q : "";
 
   return (
-    <main className="app-shell">
+    <main className="app-shell home-shell">
       <div className="ambient ambient-one" aria-hidden="true" />
       <div className="ambient ambient-two" aria-hidden="true" />
       <section className="home-content">

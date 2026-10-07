@@ -1658,7 +1658,6 @@ input {
   .home-shell {
     position: fixed;
     inset: 0;
-    height: 100dvh;
     min-height: 0;
     overflow: hidden;
     padding: max(8px, env(safe-area-inset-top)) 12px calc(76px + env(safe-area-inset-bottom));
@@ -1776,7 +1775,7 @@ input {
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
-    padding: 8px 0 12px;
+    padding: 8px 0 24px;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;

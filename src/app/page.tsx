@@ -28,23 +28,20 @@ export default async function Home({ searchParams }: HomePageProps) {
   const query = typeof params.q === "string" ? params.q : "";
 
   return (
-    <main className="app-shell home-shell">
+    <main className="app-shell">
       <div className="ambient ambient-one" aria-hidden="true" />
       <div className="ambient ambient-two" aria-hidden="true" />
       <section className="home-content">
-        <Image
-          alt="KEURAOKE — Your song. Your moment."
-          className="home-logo"
-          height={1254}
-          preload
-          sizes="(max-width: 520px) 190px, 240px"
-          src="/keuraoke-logo.png"
-          width={1254}
-        />
-        <p className="eyebrow">YOUR NEXT SONG STARTS HERE</p>
-        <p className="home-subtitle">Search a song and start singing</p>
+        <header className="home-header">
+          <div className="brand-mark" aria-hidden="true">
+            <span className="brand-mark-note">♪</span>
+          </div>
+          <p className="eyebrow">YOUR NEXT SONG STARTS HERE</p>
+          <h1>KEURAOKE</h1>
+          <p className="home-subtitle">Search a song and start singing</p>
+          <SearchForm compact initialQuery={query} key={query} />
+        </header>
         <SongOfTheDay />
-        <SearchForm compact initialQuery={query} key={query} />
         <section className="featured-youtube" aria-labelledby="featured-youtube-heading">
           <h2 id="featured-youtube-heading">🎵 FEATURED ON YOUTUBE</h2>
           <div className="featured-youtube-grid">
@@ -75,7 +72,9 @@ export default async function Home({ searchParams }: HomePageProps) {
             ))}
           </div>
         </section>
-        <SearchResults query={query} />
+        <div className="home-results-scroll">
+          <SearchResults query={query} />
+        </div>
 
         <section className="popular-section" aria-labelledby="popular-heading">
           <h2 id="popular-heading">Popular Karaoke Searches</h2>
